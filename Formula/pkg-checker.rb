@@ -1,20 +1,20 @@
 class PkgChecker < Formula
   desc "CLI tool for checking package versions and updates"
   homepage "https://github.com/jenkinpan/pkg-checker-rs"
-  version "0.7.5"
+  version "0.8.0"
   license "MIT OR Apache-2.0"
 
   if OS.mac?
     if Hardware::CPU.arm?
       url "https://github.com/jenkinpan/pkg-checker-rs/releases/download/v#{version}/pkg-checker-aarch64-apple-darwin.tar.gz"
-      sha256 "3d4f7689326cdc3e1c901a515112cebbd4848a57265a96fb5e11482185a2621b"
+      sha256 "cfd71a2181b35de47210fffa24513a228bd2dc3fc11491085ac52f5c3221dd92"
     else
       url "https://github.com/jenkinpan/pkg-checker-rs/releases/download/v#{version}/pkg-checker-x86_64-apple-darwin.tar.gz"
-      sha256 "37375d881956ff9ba9f41e179993d05c42f0cbe6283b0352012a67984d7228d5"
+      sha256 "c88d3a622b4b6f8c952e65e00e42a33cce2658574f94294c546e844f748547c4"
     end
   elsif OS.linux?
     url "https://github.com/jenkinpan/pkg-checker-rs/releases/download/v#{version}/pkg-checker-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "06c910a48946b9cdff4650cfbdad2528c18068029bf128d6f90431a9b78c2cbd"
+    sha256 "82193086a157f9a9ba7a2bc75c08cf3f58f22e9cee80f605f48a737abe27cca3"
   end
 
   def install
@@ -22,6 +22,6 @@ class PkgChecker < Formula
   end
 
   test do
-    assert_match "pkg-checker 0.7.5", shell_output("#{bin}/pkg-checker --version")
+    assert_match "pkg-checker 0.8.0", shell_output("#{bin}/pkg-checker --version")
   end
 end
