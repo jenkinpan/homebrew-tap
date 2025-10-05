@@ -1,0 +1,186 @@
+name: Update Homebrew Tap
+
+on:
+  repository_dispatch:
+    types: [update-devtool, update-pkg-checker]
+  workflow_dispatch:
+    inputs:
+      formula:
+        description: "Formula to update (devtool or pkg-checker)"
+        required: true
+        default: "devtool"
+        type: choice
+        options:
+          - devtool
+          - pkg-checker
+      version:
+        description: "Version to update to (leave empty for latest)"
+        required: false
+        type: string
+  schedule:
+    # Run daily at 2 AM UTC to check for updates
+    - cron: "0 2 * * *"
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tap repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.TAP_DEPLOY_KEY }}
+
+      - name: Add GitHub to known hosts
+        run: |
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Determine formula and version
+        id: determine
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            FORMULA="${{ github.event.action }}"
+            VERSION="${{ github.event.client_payload.version }}"
+          else
+            FORMULA="${{ github.event.inputs.formula }}"
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+
+          if [ -z "$VERSION" ]; then
+            if [ "$FORMULA" = "devtool" ]; then
+              VERSION=$(curl -s https://api.github.com/repos/jenkinpan/devtool-rs/releases/latest | jq -r '.tag_name' | sed 's/v//')
+            elif [ "$FORMULA" = "pkg-checker" ]; then
+              VERSION=$(curl -s https://api.github.com/repos/jenkinpan/pkg-checker-rs/releases/latest | jq -r '.tag_name' | sed 's/v//')
+            fi
+          fi
+
+          echo "formula=$FORMULA" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Formula: $FORMULA, Version: $VERSION"
+
+      - name: Download and calculate checksums
+        id: checksums
+        run: |
+          FORMULA="${{ steps.determine.outputs.formula }}"
+          VERSION="${{ steps.determine.outputs.version }}"
+
+          if [ "$FORMULA" = "devtool" ]; then
+            REPO="jenkinpan/devtool-rs"
+            BINARY_NAME="devtool"
+          elif [ "$FORMULA" = "pkg-checker" ]; then
+            REPO="jenkinpan/pkg-checker-rs"
+            BINARY_NAME="pkg-checker"
+          fi
+
+          # Create temporary directory
+          mkdir -p temp_checksums
+
+          # Download and calculate checksums for each platform
+          for platform in "aarch64-apple-darwin" "x86_64-apple-darwin" "aarch64-unknown-linux-gnu" "x86_64-unknown-linux-gnu"; do
+            URL="https://github.com/$REPO/releases/download/v$VERSION/$BINARY_NAME-$platform.tar.gz"
+            echo "Downloading $URL"
+            
+            if curl -L -o "temp_checksums/$BINARY_NAME-$platform.tar.gz" "$URL"; then
+              SHA256=$(sha256sum "temp_checksums/$BINARY_NAME-$platform.tar.gz" | cut -d' ' -f1)
+              echo "${platform}_sha256=$SHA256" >> $GITHUB_OUTPUT
+              echo "SHA256 for $platform: $SHA256"
+            else
+              echo "Failed to download $platform"
+              echo "${platform}_sha256=" >> $GITHUB_OUTPUT
+            fi
+          done
+
+      - name: Update formula
+        run: |
+          FORMULA="${{ steps.determine.outputs.formula }}"
+          VERSION="${{ steps.determine.outputs.version }}"
+
+          if [ "$FORMULA" = "devtool" ]; then
+            FORMULA_FILE="Formula/devtool.rb"
+            CLASS_NAME="Devtool"
+            BINARY_NAME="devtool"
+          elif [ "$FORMULA" = "pkg-checker" ]; then
+            FORMULA_FILE="Formula/pkg-checker.rb"
+            CLASS_NAME="PkgChecker"
+            BINARY_NAME="pkg-checker"
+          fi
+
+          # Update version
+          sed -i "s/version \".*\"/version \"$VERSION\"/" "$FORMULA_FILE"
+
+          # Update checksums
+          if [ -n "${{ steps.checksums.outputs.aarch64-apple-darwin_sha256 }}" ]; then
+            sed -i "s|url \".*aarch64-apple-darwin.*\"|url \"https://github.com/jenkinpan/$FORMULA-rs/releases/download/v$VERSION/$BINARY_NAME-aarch64-apple-darwin.tar.gz\"|" "$FORMULA_FILE"
+            sed -i "s|sha256 \".*\" # Will be updated by CI|sha256 \"${{ steps.checksums.outputs.aarch64-apple-darwin_sha256 }}\"|" "$FORMULA_FILE"
+          fi
+
+          if [ -n "${{ steps.checksums.outputs.x86_64-apple-darwin_sha256 }}" ]; then
+            sed -i "s|url \".*x86_64-apple-darwin.*\"|url \"https://github.com/jenkinpan/$FORMULA-rs/releases/download/v$VERSION/$BINARY_NAME-x86_64-apple-darwin.tar.gz\"|" "$FORMULA_FILE"
+            sed -i "s|sha256 \".*\" # Will be updated by CI|sha256 \"${{ steps.checksums.outputs.x86_64-apple-darwin_sha256 }}\"|" "$FORMULA_FILE"
+          fi
+
+          if [ -n "${{ steps.checksums.outputs.aarch64-unknown-linux-gnu_sha256 }}" ]; then
+            sed -i "s|url \".*aarch64-unknown-linux-gnu.*\"|url \"https://github.com/jenkinpan/$FORMULA-rs/releases/download/v$VERSION/$BINARY_NAME-aarch64-unknown-linux-gnu.tar.gz\"|" "$FORMULA_FILE"
+            sed -i "s|sha256 \".*\" # Will be updated by CI|sha256 \"${{ steps.checksums.outputs.aarch64-unknown-linux-gnu_sha256 }}\"|" "$FORMULA_FILE"
+          fi
+
+          if [ -n "${{ steps.checksums.outputs.x86_64-unknown-linux-gnu_sha256 }}" ]; then
+            sed -i "s|url \".*x86_64-unknown-linux-gnu.*\"|url \"https://github.com/jenkinpan/$FORMULA-rs/releases/download/v$VERSION/$BINARY_NAME-x86_64-unknown-linux-gnu.tar.gz\"|" "$FORMULA_FILE"
+            sed -i "s|sha256 \".*\" # Will be updated by CI|sha256 \"${{ steps.checksums.outputs.x86_64-unknown-linux-gnu_sha256 }}\"|" "$FORMULA_FILE"
+          fi
+
+      - name: Validate formula
+        run: |
+          FORMULA="${{ steps.determine.outputs.formula }}"
+          if [ "$FORMULA" = "devtool" ]; then
+            FORMULA_FILE="Formula/devtool.rb"
+          elif [ "$FORMULA" = "pkg-checker" ]; then
+            FORMULA_FILE="Formula/pkg-checker.rb"
+          fi
+
+          # Check if formula syntax is valid
+          ruby -c "$FORMULA_FILE"
+
+          # Try to parse the formula (basic validation)
+          ruby -e "require_relative '$FORMULA_FILE'"
+
+      - name: Commit and push changes
+        run: |
+          FORMULA="${{ steps.determine.outputs.formula }}"
+          VERSION="${{ steps.determine.outputs.version }}"
+
+          # Check if there are changes
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Add changes
+          git add "Formula/$FORMULA.rb"
+
+          # Commit changes
+          git commit -m "Update $FORMULA to version $VERSION"
+
+        # Push changes
+        git push origin master
+
+      - name: Create summary
+        run: |
+          FORMULA="${{ steps.determine.outputs.formula }}"
+          VERSION="${{ steps.determine.outputs.version }}"
+
+          echo "## Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Formula**: $FORMULA" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Successfully updated" >> $GITHUB_STEP_SUMMARY
