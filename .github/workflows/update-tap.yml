@@ -17,6 +17,9 @@ on:
         description: "Version to update to (leave empty for latest)"
         required: false
         type: string
+
+permissions:
+  contents: write
   schedule:
     # Run daily at 2 AM UTC to check for updates
     - cron: "0 2 * * *"
@@ -36,9 +39,9 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # Use Personal Access Token for authentication
+          # Use GitHub Token for authentication
           git config --local credential.helper store
-          echo "https://${{ secrets.PAT_TOKEN }}@github.com" > ~/.git-credentials
+          echo "https://${{ secrets.GITHUB_TOKEN }}@github.com" > ~/.git-credentials
 
       - name: Determine formula and version
         id: determine
