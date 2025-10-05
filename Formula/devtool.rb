@@ -1,24 +1,24 @@
 class Devtool < Formula
   desc "CLI tool for development to update rustup toolchain, mise maintained tools and homebrew packages"
   homepage "https://github.com/jenkinpan/devtool-rs"
-  version "main"
+  version "0.5.1"
   license "MIT OR Apache-2.0"
 
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/jenkinpan/devtool-rs/releases/download/vmain/devtool-aarch64-apple-darwin.tar.gz"
-      sha256 "0f91bd6fac5240afcac8f37350741e5169de85ef8a173a7b0e043affa862116b"
+      url "https://github.com/jenkinpan/devtool-rs/releases/download/v#{version}/devtool-aarch64-apple-darwin.tar.gz"
+      sha256 "5d9a0c97ac51675d894cb4e46ace5f71a659aaef48f7d52c94c6409e50656fdd"
     else
-      url "https://github.com/jenkinpan/devtool-rs/releases/download/vmain/devtool-x86_64-apple-darwin.tar.gz"
-      sha256 "698dc4d177f7e7dfb2d0ca27e696b87d3d24c2117808ab1243a27de2ac482f5b"
+      url "https://github.com/jenkinpan/devtool-rs/releases/download/v#{version}/devtool-x86_64-apple-darwin.tar.gz"
+      sha256 "962727a68a733448bb6d741b1d810a42991b3dc46ab4a4999d32a565f160d98d"
     end
   elsif OS.linux?
     if Hardware::CPU.arm?
-      url "https://github.com/jenkinpan/devtool-rs/releases/download/vmain/devtool-aarch64-unknown-linux-gnu.tar.gz"
-      sha256 "f78e922a267f890d9fb4e05de04f44f35e87a780c5e61ef9316f253fd8c3acf2"
+      url "https://github.com/jenkinpan/devtool-rs/releases/download/v#{version}/devtool-aarch64-unknown-linux-gnu.tar.gz"
+      sha256 "a848c27aefaf615e4e801de4bd5367ae3752ba1b5b91b22535641912a3e363c2"
     else
-      url "https://github.com/jenkinpan/devtool-rs/releases/download/vmain/devtool-x86_64-unknown-linux-gnu.tar.gz"
-      sha256 "1faa74f2f5a1f4dd67b1be0f3d32e5d62236a0ab5b9e27e5d7b57c19e7d5b5f0"
+      url "https://github.com/jenkinpan/devtool-rs/releases/download/v#{version}/devtool-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "b738171981d9c930cbc469c6d4c48f3db3aab2786e37b4028cb181d8358088a1"
     end
   end
 
@@ -27,6 +27,6 @@ class Devtool < Formula
   end
 
   test do
-    assert_match "devtool refs/heads/main", shell_output("#{bin}/devtool --version")
+    assert_match "devtool 0.5.1", shell_output("#{bin}/devtool --version")
   end
 end
