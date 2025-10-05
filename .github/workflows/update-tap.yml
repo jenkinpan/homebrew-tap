@@ -58,7 +58,7 @@ jobs:
               VERSION=$(curl -s https://api.github.com/repos/jenkinpan/pkg-checker-rs/releases/latest | jq -r '.tag_name' | sed 's/v//')
             fi
           fi
-          
+
           # Additional check for any invalid version values
           if [ "$VERSION" = "main" ] || [ "$VERSION" = "refs/heads/main" ] || [ "$VERSION" = "refs/heads/refs/heads/main" ]; then
             if [ "$FORMULA" = "devtool" ]; then
