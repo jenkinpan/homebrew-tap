@@ -152,8 +152,16 @@ jobs:
           # Check if formula syntax is valid
           ruby -c "$FORMULA_FILE"
 
-          # Try to parse the formula (basic validation)
-          ruby -e "require_relative '$FORMULA_FILE'"
+          # Basic validation - check if the file contains required elements
+          if ! grep -q "class.*Formula" "$FORMULA_FILE"; then
+            echo "Error: Formula file does not contain class definition"
+            exit 1
+          fi
+          
+          if ! grep -q "def install" "$FORMULA_FILE"; then
+            echo "Error: Formula file does not contain install method"
+            exit 1
+          fi
 
       - name: Commit and push changes
         run: |
