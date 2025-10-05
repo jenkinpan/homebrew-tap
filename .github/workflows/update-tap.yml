@@ -52,6 +52,13 @@ jobs:
         run: |
           ssh -T git@github.com || true
 
+      - name: Configure Git for Deploy Key
+        run: |
+          # Set up Git to use the deploy key
+          git config --local core.sshCommand "ssh -i ~/.ssh/id_rsa -o IdentitiesOnly=yes"
+          # Ensure we're using the correct remote URL
+          git remote set-url origin git@github.com:jenkinpan/homebrew-tap.git
+
       - name: Determine formula and version
         id: determine
         run: |
