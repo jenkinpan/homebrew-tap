@@ -20,9 +20,6 @@ on:
 
 permissions:
   contents: write
-  schedule:
-    # Run daily at 2 AM UTC to check for updates
-    - cron: "0 2 * * *"
 
 jobs:
   update-formula:
