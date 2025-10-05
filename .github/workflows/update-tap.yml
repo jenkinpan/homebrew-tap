@@ -172,8 +172,8 @@ jobs:
           # Commit changes
           git commit -m "Update $FORMULA to version $VERSION"
 
-        # Push changes
-        git push origin master
+          # Push changes
+          git push origin master
 
       - name: Create summary
         run: |
