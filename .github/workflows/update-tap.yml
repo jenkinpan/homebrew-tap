@@ -36,9 +36,9 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # Use GitHub Token for authentication
+          # Use Personal Access Token for authentication
           git config --local credential.helper store
-          echo "https://${{ secrets.GITHUB_TOKEN }}@github.com" > ~/.git-credentials
+          echo "https://${{ secrets.PAT_TOKEN }}@github.com" > ~/.git-credentials
 
       - name: Determine formula and version
         id: determine
