@@ -15,36 +15,61 @@ git push -u origin main
 
 **Important**: The repository MUST be public for Homebrew to access it.
 
-### 2. Create a GitHub Personal Access Token
+### 2. Generate SSH Deploy Key
 
-1. Go to: https://github.com/settings/tokens/new
-2. Token name: `Homebrew Tap Updater`
-3. Expiration: `No expiration` (recommended for automation)
-4. Select scopes:
-   - ✅ `repo` (Full control of repositories)
-   - ✅ `workflow` (Update GitHub Action workflows)
-5. Click "Generate token"
-6. **Copy the token immediately** - you won't see it again!
+Generate a new SSH key pair for deployment:
 
-### 3. Add the token to both project repositories
+```bash
+ssh-keygen -t ed25519 -C "homebrew-tap-deploy" -f ~/.ssh/homebrew_tap_deploy_key -N ""
+```
+
+This creates two files:
+- `~/.ssh/homebrew_tap_deploy_key` (private key)
+- `~/.ssh/homebrew_tap_deploy_key.pub` (public key)
+
+### 3. Add Public Key to homebrew-tap Repository
+
+1. Display your public key:
+   ```bash
+   cat ~/.ssh/homebrew_tap_deploy_key.pub
+   ```
+
+2. Go to: https://github.com/jenkinpan/homebrew-tap/settings/keys
+
+3. Click "Add deploy key"
+
+4. Fill in:
+   - **Title**: `GitHub Actions Deploy Key`
+   - **Key**: Paste the public key content
+   - ✅ **Check "Allow write access"** (important!)
+
+5. Click "Add key"
+
+### 4. Add Private Key to both project repositories
+
+**Important**: Copy the ENTIRE private key including the BEGIN/END lines:
+
+```bash
+cat ~/.ssh/homebrew_tap_deploy_key
+```
 
 #### For devtool-rs:
 ```
 1. Visit: https://github.com/jenkinpan/devtool-rs/settings/secrets/actions/new
-2. Name: TAP_GITHUB_TOKEN
-3. Secret: [paste your token]
+2. Name: TAP_DEPLOY_KEY
+3. Secret: [paste the entire private key]
 4. Click "Add secret"
 ```
 
 #### For pkg-checker-rs:
 ```
 1. Visit: https://github.com/jenkinpan/pkg-checker-rs/settings/secrets/actions/new
-2. Name: TAP_GITHUB_TOKEN
-3. Secret: [paste the same token]
+2. Name: TAP_DEPLOY_KEY
+3. Secret: [paste the same private key]
 4. Click "Add secret"
 ```
 
-### 4. Push the new workflows to project repositories
+### 5. Push the new workflows to project repositories
 
 ```bash
 # Push devtool-rs workflow
@@ -56,7 +81,7 @@ cd ~/Documents/pkg-checker-rs
 git push origin master
 ```
 
-### 5. Test the setup
+### 6. Test the setup
 
 Install the tap locally:
 
@@ -155,9 +180,9 @@ pkg-checker --version
 - Ensure the binary tarballs were uploaded to the release
 
 ### Workflow not triggering
-- Verify `TAP_GITHUB_TOKEN` secret is set in both repositories
-- Check the token has `repo` and `workflow` scopes
-- Ensure the token hasn't expired
+- Verify `TAP_DEPLOY_KEY` secret is set in both repositories
+- Check the deploy key is added to homebrew-tap with write access
+- Ensure the private key includes BEGIN/END lines
 
 ### SHA256 checksum mismatch
 - Don't manually edit checksums - they're auto-calculated
@@ -204,12 +229,11 @@ Developer                    GitHub Actions                   Homebrew Tap
     |                              |                               |
     |                      [Create GitHub Release]                 |
     |                              |                               |
-    |                              |--[Repository Dispatch]------->|
-    |                              |     (version + checksums)     |
+    |                              |--[SSH: Clone tap repo]------->|
     |                              |                               |
-    |                              |                        [Update Formula]
+    |                              |--[Update Formula]------------>|
     |                              |                               |
-    |                              |                        [Git Commit & Push]
+    |                              |--[Git Commit & Push]--------->|
     |                              |                               |
     |<-[Users can now upgrade]-------------------------------------'
 ```
@@ -220,9 +244,10 @@ Use this checklist to ensure everything is set up correctly:
 
 - [ ] Homebrew tap repository created on GitHub (public)
 - [ ] Tap repository pushed to GitHub
-- [ ] Personal Access Token created with `repo` and `workflow` scopes
-- [ ] `TAP_GITHUB_TOKEN` secret added to devtool-rs repository
-- [ ] `TAP_GITHUB_TOKEN` secret added to pkg-checker-rs repository
+- [ ] SSH key pair generated
+- [ ] Public key added as deploy key to homebrew-tap (with write access)
+- [ ] `TAP_DEPLOY_KEY` secret added to devtool-rs repository
+- [ ] `TAP_DEPLOY_KEY` secret added to pkg-checker-rs repository
 - [ ] Homebrew release workflows pushed to both project repositories
 - [ ] Tap installed locally: `brew tap jenkinpan/tap`
 - [ ] Tools installed successfully

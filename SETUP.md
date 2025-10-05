@@ -26,41 +26,74 @@ git remote add origin https://github.com/jenkinpan/homebrew-tap.git
 git push -u origin main
 ```
 
-## Step 3: Create Personal Access Token (PAT)
+## Step 3: Generate SSH Deploy Key
 
-To allow the project repositories to trigger updates in the tap:
+Generate a new SSH key pair specifically for deployment:
 
-1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
-2. Click "Generate new token (classic)"
-3. Give it a descriptive name like "Homebrew Tap Update Token"
-4. Set expiration as needed (recommend: no expiration for automation)
-5. Select the following scopes:
-   - `repo` (Full control of private repositories)
-   - `workflow` (Update GitHub Action workflows)
-6. Click "Generate token"
-7. **Important**: Copy the token immediately (you won't be able to see it again)
+```bash
+ssh-keygen -t ed25519 -C "homebrew-tap-deploy" -f ~/.ssh/homebrew_tap_deploy_key -N ""
+```
 
-## Step 4: Add Secret to devtool-rs Repository
+This creates two files:
+- `~/.ssh/homebrew_tap_deploy_key` (private key)
+- `~/.ssh/homebrew_tap_deploy_key.pub` (public key)
+
+## Step 4: Add Public Key to homebrew-tap Repository
+
+1. Display your public key:
+   ```bash
+   cat ~/.ssh/homebrew_tap_deploy_key.pub
+   ```
+
+2. Go to the `homebrew-tap` repository on GitHub
+3. Navigate to Settings → Deploy keys
+4. Click "Add deploy key"
+5. Fill in:
+   - **Title**: `GitHub Actions Deploy Key`
+   - **Key**: Paste the public key content
+   - **Allow write access**: ✅ **CHECK THIS BOX** (required for pushing updates)
+6. Click "Add key"
+
+## Step 5: Add Private Key to devtool-rs Repository
+
+**Important**: Copy the ENTIRE private key including the BEGIN/END lines:
+
+```bash
+cat ~/.ssh/homebrew_tap_deploy_key
+```
 
 1. Go to the `devtool-rs` repository on GitHub
 2. Navigate to Settings → Secrets and variables → Actions
 3. Click "New repository secret"
-4. Name: `TAP_GITHUB_TOKEN`
-5. Value: Paste the Personal Access Token you just created
+4. Name: `TAP_DEPLOY_KEY`
+5. Value: Paste the entire private key content (including `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----`)
 6. Click "Add secret"
 
-## Step 5: Add Secret to pkg-checker-rs Repository
+## Step 6: Add Private Key to pkg-checker-rs Repository
 
 Repeat the same process for `pkg-checker-rs`:
 
 1. Go to the `pkg-checker-rs` repository on GitHub
 2. Navigate to Settings → Secrets and variables → Actions
 3. Click "New repository secret"
-4. Name: `TAP_GITHUB_TOKEN`
-5. Value: Paste the same Personal Access Token
+4. Name: `TAP_DEPLOY_KEY`
+5. Value: Paste the same private key content
 6. Click "Add secret"
 
-## Step 6: Test the Setup
+## Step 7: Secure Your Private Key (Optional)
+
+After adding the key to GitHub secrets, you can optionally remove it from your local machine:
+
+```bash
+# Optional: Remove the private key from your machine
+# (It's now stored securely in GitHub Secrets)
+rm ~/.ssh/homebrew_tap_deploy_key
+rm ~/.ssh/homebrew_tap_deploy_key.pub
+```
+
+Or keep it backed up securely in case you need to re-add it later.
+
+## Step 8: Test the Setup
 
 ### Option 1: Create a New Release (Recommended)
 
@@ -93,7 +126,7 @@ If you don't want to create a release yet:
    - SHA256 checksums for all platforms
 6. Click "Run workflow"
 
-## Step 7: Install and Test Locally
+## Step 9: Install and Test Locally
 
 Once the tap is set up:
 
@@ -119,7 +152,7 @@ pkg-checker --version
    - Builds binaries for all supported platforms
    - Uploads binaries to the GitHub release
    - Calculates SHA256 checksums for each binary
-3. **Trigger Step**: Sends a repository dispatch event to `homebrew-tap` with version and checksums
+3. **Trigger Step**: Uses SSH deploy key to clone and update `homebrew-tap` repository
 4. **Update Step**: The tap's workflow receives the event and:
    - Updates the formula with new version number
    - Updates SHA256 checksums for all platforms
@@ -161,8 +194,9 @@ pkg-checker --version
 ### Issue: Workflow doesn't trigger
 
 **Solution**: 
-- Check that `TAP_GITHUB_TOKEN` secret is correctly set
-- Verify the token has `repo` and `workflow` scopes
+- Check that `TAP_DEPLOY_KEY` secret is correctly set in both project repositories
+- Verify the deploy key is added to homebrew-tap with write access enabled
+- Ensure the private key includes the BEGIN/END lines
 - Check that the repository name in the workflow file matches your actual repository
 
 ### Issue: SHA256 mismatch error
@@ -220,8 +254,19 @@ brew audit --strict devtool
 
 ## Security Notes
 
-- The `TAP_GITHUB_TOKEN` should be treated as sensitive information
-- Never commit tokens to the repository
-- Consider setting token expiration and rotating regularly
-- The token only needs access to the tap repository
+- The `TAP_DEPLOY_KEY` (private key) should be treated as sensitive information
+- Never commit private keys to the repository
+- Deploy keys are scoped to a single repository (more secure than PAT)
+- The deploy key only has access to the tap repository
+- Deploy keys don't expire, but can be easily revoked and rotated
 - Use GitHub's environment protection rules for additional security
+
+## Benefits of SSH Deploy Key over Personal Access Token
+
+- ✅ No need for Personal Access Token
+- ✅ More secure - scoped to a single repository
+- ✅ No expiration date concerns
+- ✅ Easier to revoke and rotate
+- ✅ Read/write access only to the tap repository
+
+See [SSH_DEPLOY_KEY_SETUP.md](./SSH_DEPLOY_KEY_SETUP.md) for detailed information.

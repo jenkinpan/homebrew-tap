@@ -36,24 +36,23 @@ brew install jenkinpan/tap/pkg-checker
 
 ## Automatic Updates
 
-This tap is automatically updated when new releases are published to the respective GitHub repositories. The formulae are updated via GitHub Actions workflows.
+This tap is automatically updated when new releases are published to the respective GitHub repositories. The formulae are updated via GitHub Actions workflows using SSH deploy keys.
 
 ## How It Works
 
-1. When a new release is created in `devtool-rs` or `pkg-checker-rs`, their CI/CD pipelines trigger a repository dispatch event to this tap
-2. The tap's GitHub Actions workflow receives the event with version and SHA256 checksums
+1. When a new release is created in `devtool-rs` or `pkg-checker-rs`, their CI/CD pipelines build binaries and calculate checksums
+2. The workflow uses an SSH deploy key to clone this tap repository
 3. The formula is automatically updated with the new version and checksums
-4. Changes are committed and pushed to the tap repository
+4. Changes are committed and pushed back to the tap repository
 
-## Manual Update
+## Setup
 
-If you need to manually update a formula, you can trigger the workflow dispatch with the required parameters:
+To enable automatic updates, you need to configure SSH deploy keys. See [SSH_DEPLOY_KEY_SETUP.md](./SSH_DEPLOY_KEY_SETUP.md) for detailed instructions.
 
-1. Go to the Actions tab in this repository
-2. Select the appropriate workflow (Update devtool Formula or Update pkg-checker Formula)
-3. Click "Run workflow"
-4. Fill in the version and SHA256 checksums for all platforms
-5. Click "Run workflow"
+**Quick setup:**
+1. Generate SSH key pair
+2. Add public key as deploy key to this repository (with write access)
+3. Add private key as secret to `devtool-rs` and `pkg-checker-rs` repositories
 
 ## Development
 
