@@ -7,14 +7,14 @@ class CargoFresh < Formula
   if OS.mac?
     if Hardware::CPU.arm?
       url "https://github.com/jenkinpan/cargo-fresh/releases/download/v#{version}/cargo-fresh-aarch64-apple-darwin.tar.gz"
-      sha256 "823b4b280e69f1431cf0ee67bd59b7c454819926cf1d102481de9268b4611195"
+      sha256 "d30e86930a1e7d6aea5a87020f5287b74077dd2b6da27739244a6f8f3c22628e"
     else
       url "https://github.com/jenkinpan/cargo-fresh/releases/download/v#{version}/cargo-fresh-x86_64-apple-darwin.tar.gz"
-      sha256 "657a00292af4a1e2c1f34cae5f1f0a1d9c36a86692ad115b23838d7a4c676822"
+      sha256 "db4cb03d9d973e42a2f5197032eb0791e109fcc851b790b86f5552b646385291"
     end
   elsif OS.linux?
     url "https://github.com/jenkinpan/cargo-fresh/releases/download/v#{version}/cargo-fresh-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "659a837acc60e01d9d24f76e39344b543a731a33f571e323240d9293e323c88f"
+    sha256 "ae04b8057413f3f996e619035e966e736d5b72a9be61d4b9e634ebf89f94af63"
   end
 
   def install
