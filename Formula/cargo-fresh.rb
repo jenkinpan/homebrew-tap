@@ -1,7 +1,7 @@
 class CargoFresh < Formula
   desc "A Rust tool for checking and updating globally installed Cargo packages"
   homepage "https://github.com/jenkinpan/cargo-fresh"
-  version "0.1.0"
+  version "0.10.2"
   license "MIT"
 
   if OS.mac?
@@ -22,6 +22,6 @@ class CargoFresh < Formula
   end
 
   test do
-    assert_match "cargo-fresh 0.1.0", shell_output("#{bin}/cargo-fresh --version")
+    assert_match "cargo-fresh 0.10.2", shell_output("#{bin}/cargo-fresh --version")
   end
 end
