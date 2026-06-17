@@ -1,20 +1,20 @@
 class CargoFresh < Formula
   desc "A Rust tool for checking and updating globally installed Cargo packages"
   homepage "https://github.com/jenkinpan/cargo-fresh"
-  version "0.12.6"
+  version "0.12.7"
   license "MIT"
 
   if OS.mac?
     if Hardware::CPU.arm?
       url "https://github.com/jenkinpan/cargo-fresh/releases/download/v#{version}/cargo-fresh-aarch64-apple-darwin.tar.gz"
-      sha256 "f9451ffa5a211940c2a4211156843f2dd96bed88712531e3d32c596bd2ee05e2"
+      sha256 "2c37cb2c09fda0fecc17ec132b96942cf9380f1ceea2fedf4ed9b5e95a08299e"
     else
       url "https://github.com/jenkinpan/cargo-fresh/releases/download/v#{version}/cargo-fresh-x86_64-apple-darwin.tar.gz"
-      sha256 "94ad7970aa995c57f4289d0fc838618360c50524e5b06d6a845b6acec69a8fa3"
+      sha256 "7d61e9fae5e37f93332cd88be39cdcf275eeb4b8a79e7a402744c2d24a0d0ac1"
     end
   elsif OS.linux?
     url "https://github.com/jenkinpan/cargo-fresh/releases/download/v#{version}/cargo-fresh-x86_64-unknown-linux-gnu.tar.gz"
-    sha256 "51d1d7025ff790a74b10145aef5069a2ef82e7e54c920f3f81941efdef3342ce"
+    sha256 "581bd91c6e30fada84caed519f56c9fe86f970415b0b9744f7f260d7d9941012"
   end
 
   def install
@@ -22,6 +22,6 @@ class CargoFresh < Formula
   end
 
   test do
-    assert_match "cargo-fresh 0.12.6", shell_output("#{bin}/cargo-fresh --version")
+    assert_match "cargo-fresh 0.12.7", shell_output("#{bin}/cargo-fresh --version")
   end
 end
